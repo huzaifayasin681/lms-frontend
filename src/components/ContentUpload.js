@@ -22,13 +22,23 @@ const ContentUpload = ({ courseId, onUploadComplete, onClose }) => {
   const [urlData, setUrlData] = useState({
     title: '',
     url: '',
-    description: ''
+    description: '',
+    visibility: 'private',
+    access_level: 'course_members'
   });
   
   // Text upload state
   const [textData, setTextData] = useState({
     title: '',
-    text_content: ''
+    text_content: '',
+    visibility: 'private',
+    access_level: 'course_members'
+  });
+  
+  // Common visibility state for files
+  const [fileVisibility, setFileVisibility] = useState({
+    visibility: 'private',
+    access_level: 'course_members'
   });
 
   const onDrop = useCallback((acceptedFiles, rejectedFiles) => {
@@ -135,6 +145,8 @@ const ContentUpload = ({ courseId, onUploadComplete, onClose }) => {
         formData.append('file', fileItem.file);
         formData.append('content_type', 'file');
         formData.append('title', fileItem.title);
+        formData.append('visibility', fileVisibility.visibility);
+        formData.append('access_level', fileVisibility.access_level);
 
         const result = await ApiService.uploadContent(courseId, formData, (progress) => {
           setFiles(prev => prev.map(f => 
@@ -176,11 +188,13 @@ const ContentUpload = ({ courseId, onUploadComplete, onClose }) => {
         content_type: 'url',
         title: urlData.title,
         url: urlData.url,
-        description: urlData.description
+        description: urlData.description,
+        visibility: urlData.visibility,
+        access_level: urlData.access_level
       });
 
       toast.success('URL added successfully');
-      setUrlData({ title: '', url: '', description: '' });
+      setUrlData({ title: '', url: '', description: '', visibility: 'private', access_level: 'course_members' });
       
       if (onUploadComplete) {
         onUploadComplete();
@@ -203,11 +217,13 @@ const ContentUpload = ({ courseId, onUploadComplete, onClose }) => {
       await ApiService.uploadContent(courseId, {
         content_type: 'text',
         title: textData.title,
-        text_content: textData.text_content
+        text_content: textData.text_content,
+        visibility: textData.visibility,
+        access_level: textData.access_level
       });
 
       toast.success('Text content added successfully');
-      setTextData({ title: '', text_content: '' });
+      setTextData({ title: '', text_content: '', visibility: 'private', access_level: 'course_members' });
       
       if (onUploadComplete) {
         onUploadComplete();
@@ -327,6 +343,40 @@ const ContentUpload = ({ courseId, onUploadComplete, onClose }) => {
                     </div>
                   </div>
 
+                  {/* File Visibility Settings */}
+                  <div className="bg-gray-50 p-4 rounded-lg space-y-4">
+                    <h4 className="text-sm font-medium text-gray-900">Visibility Settings</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Visibility
+                        </label>
+                        <select
+                          value={fileVisibility.visibility}
+                          onChange={(e) => setFileVisibility(prev => ({ ...prev, visibility: e.target.value }))}
+                          className="block w-full input-field"
+                        >
+                          <option value="private">Private</option>
+                          <option value="public">Public</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Access Level
+                        </label>
+                        <select
+                          value={fileVisibility.access_level}
+                          onChange={(e) => setFileVisibility(prev => ({ ...prev, access_level: e.target.value }))}
+                          className="block w-full input-field"
+                        >
+                          <option value="everyone">Everyone</option>
+                          <option value="course_members">Course Members</option>
+                          <option value="instructors">Instructors Only</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* File List */}
                   {files.length > 0 && (
                     <div className="space-y-3">
@@ -416,6 +466,37 @@ const ContentUpload = ({ courseId, onUploadComplete, onClose }) => {
                       placeholder="Optional description"
                     />
                   </div>
+
+                  {/* URL Visibility Settings */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Visibility
+                      </label>
+                      <select
+                        value={urlData.visibility}
+                        onChange={(e) => setUrlData(prev => ({ ...prev, visibility: e.target.value }))}
+                        className="mt-1 block w-full input-field"
+                      >
+                        <option value="private">Private</option>
+                        <option value="public">Public</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Access Level
+                      </label>
+                      <select
+                        value={urlData.access_level}
+                        onChange={(e) => setUrlData(prev => ({ ...prev, access_level: e.target.value }))}
+                        className="mt-1 block w-full input-field"
+                      >
+                        <option value="everyone">Everyone</option>
+                        <option value="course_members">Course Members</option>
+                        <option value="instructors">Instructors Only</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -449,6 +530,37 @@ const ContentUpload = ({ courseId, onUploadComplete, onClose }) => {
                     <p className="mt-1 text-xs text-gray-500">
                       {textData.text_content.length}/50000 characters
                     </p>
+                  </div>
+
+                  {/* Text Visibility Settings */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Visibility
+                      </label>
+                      <select
+                        value={textData.visibility}
+                        onChange={(e) => setTextData(prev => ({ ...prev, visibility: e.target.value }))}
+                        className="mt-1 block w-full input-field"
+                      >
+                        <option value="private">Private</option>
+                        <option value="public">Public</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Access Level
+                      </label>
+                      <select
+                        value={textData.access_level}
+                        onChange={(e) => setTextData(prev => ({ ...prev, access_level: e.target.value }))}
+                        className="mt-1 block w-full input-field"
+                      >
+                        <option value="everyone">Everyone</option>
+                        <option value="course_members">Course Members</option>
+                        <option value="instructors">Instructors Only</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               )}

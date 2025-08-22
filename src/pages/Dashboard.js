@@ -17,6 +17,8 @@ const Dashboard = () => {
     activeCourses: 0,
     moodleCourses: 0,
     canvasCourses: 0,
+    sakaiCourses: 0,
+    chamiloCourses: 0,
   });
   const [recentCourses, setRecentCourses] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +44,8 @@ const Dashboard = () => {
         activeCourses: allCourses.filter(course => course.active).length,
         moodleCourses: allCourses.filter(course => course.lms === 'moodle').length,
         canvasCourses: allCourses.filter(course => course.lms === 'canvas').length,
+        sakaiCourses: allCourses.filter(course => course.lms === 'sakai').length,
+        chamiloCourses: allCourses.filter(course => course.lms === 'chamilo').length,
       });
     } catch (error) {
       toast.error('Failed to load dashboard data');
@@ -90,6 +94,20 @@ const Dashboard = () => {
       color: 'text-purple-600',
       bg: 'bg-purple-50',
     },
+    {
+      name: 'Sakai Courses',
+      value: stats.sakaiCourses,
+      icon: AcademicCapIcon,
+      color: 'text-blue-600',
+      bg: 'bg-blue-50',
+    },
+    {
+      name: 'Chamilo Courses',
+      value: stats.chamiloCourses,
+      icon: ServerIcon,
+      color: 'text-green-600',
+      bg: 'bg-green-50',
+    },
   ];
 
   if (loading) {
@@ -112,7 +130,7 @@ const Dashboard = () => {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 mb-8">
         {statCards.map((stat) => {
           const Icon = stat.icon;
           return (
@@ -197,7 +215,7 @@ const Dashboard = () => {
                 <h3 className="text-sm font-medium text-gray-900 mb-2">
                   Sync Courses from External LMS
                 </h3>
-                <div className="flex space-x-3">
+                <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => handleSync('moodle')}
                     className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
@@ -209,6 +227,18 @@ const Dashboard = () => {
                     className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
                   >
                     Sync Canvas
+                  </button>
+                  <button
+                    onClick={() => handleSync('sakai')}
+                    className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                  >
+                    Sync Sakai
+                  </button>
+                  <button
+                    onClick={() => handleSync('chamilo')}
+                    className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                  >
+                    Sync Chamilo
                   </button>
                 </div>
                 <p className="text-xs text-gray-500 mt-2">

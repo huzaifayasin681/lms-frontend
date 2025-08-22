@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://172.16.10.146:6543/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:6543/api';
 
 class AuthService {
   constructor() {
@@ -61,13 +61,34 @@ class AuthService {
 
   async register(username, email, password) {
     try {
+      console.log('Registration attempt:', { username, email, API_BASE_URL });
+      console.log('Making request to:', `${API_BASE_URL}/auth/register`);
+      console.log('Request headers:', {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      });
+      
       const response = await axios.post(`${API_BASE_URL}/auth/register`, {
         username,
         email,
         password,
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        timeout: 10000 // 10 second timeout
       });
 
+      console.log('Registration response status:', response.status);
+      console.log('Registration response data:', response.data);
+      console.log('Registration response headers:', response.headers);
+      
       const { token, user } = response.data;
+      
+      if (!token || !user) {
+        throw new Error('Invalid response format: missing token or user data');
+      }
       
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
@@ -76,9 +97,47 @@ class AuthService {
       
       return { success: true, user };
     } catch (error) {
+      console.error('Registration error details:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        headers: error.response?.headers,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          headers: error.config?.headers
+        }
+      });
+      
+      // Handle different types of errors
+      let errorMessage = 'Registration failed';
+      
+      if (error.code === 'ECONNREFUSED' || error.code === 'ERR_NETWORK') {
+        errorMessage = 'Cannot connect to server. Please check if the backend is running.';
+      } else if (error.response) {
+        // Server responded with error
+        const data = error.response.data;
+        if (typeof data === 'string') {
+          errorMessage = data;
+        } else if (data?.message) {
+          errorMessage = data.message;
+        } else if (data?.error) {
+          errorMessage = data.error;
+        } else if (error.response.status === 400) {
+          errorMessage = 'Invalid registration data provided';
+        } else if (error.response.status === 409) {
+          errorMessage = 'Username or email already exists';
+        } else if (error.response.status >= 500) {
+          errorMessage = 'Server error. Please try again later.';
+        }
+      } else if (error.request) {
+        errorMessage = 'No response from server. Please check your connection.';
+      }
+      
       return {
         success: false,
-        error: error.response?.data?.message || 'Registration failed',
+        error: errorMessage,
       };
     }
   }
