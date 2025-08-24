@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:6543/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:1234/api';
 
 class AuthService {
   constructor() {
