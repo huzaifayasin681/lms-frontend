@@ -6,6 +6,7 @@ import {
   AcademicCapIcon,
   ArrowRightOnRectangleIcon,
   UserIcon,
+  CogIcon,
 } from '@heroicons/react/24/outline';
 
 const Layout = ({ children }) => {
@@ -21,6 +22,7 @@ const Layout = ({ children }) => {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: HomeIcon },
     { name: 'Courses', href: '/courses', icon: AcademicCapIcon },
+    { name: 'Moodle', href: '/moodle', icon: CogIcon },
   ];
 
   return (

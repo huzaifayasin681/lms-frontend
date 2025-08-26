@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import ApiService from '../services/api';
+import moodleService from '../services/moodleService';
 import toast from 'react-hot-toast';
 import CourseList from '../components/CourseList';
 import CourseForm from '../components/CourseForm';
@@ -9,6 +10,7 @@ import {
   PlusIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
+  ArrowPathIcon,
 } from '@heroicons/react/24/outline';
 
 const Courses = () => {
@@ -31,10 +33,22 @@ const Courses = () => {
   const [editingCourse, setEditingCourse] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [moodleConnected, setMoodleConnected] = useState(false);
 
   useEffect(() => {
     fetchCourses();
+    checkMoodleConnection();
   }, [pagination.page, searchTerm, filters]);
+
+  const checkMoodleConnection = async () => {
+    try {
+      const result = await moodleService.testConnection();
+      setMoodleConnected(result.success);
+    } catch (error) {
+      setMoodleConnected(false);
+    }
+  };
 
   const fetchCourses = async () => {
     try {
@@ -137,6 +151,63 @@ const Courses = () => {
     setPagination(prev => ({ ...prev, page: newPage }));
   };
 
+  const handleMoodleSync = async () => {
+    if (!moodleConnected) {
+      toast.error('Moodle is not connected');
+      return;
+    }
+
+    setSyncing(true);
+    try {
+      // Sync courses from Moodle to local database
+      await ApiService.syncCourses('moodle');
+      toast.success('Moodle courses synced successfully');
+      fetchCourses(); // Refresh the course list
+    } catch (error) {
+      toast.error('Failed to sync Moodle courses');
+      console.error('Moodle sync error:', error);
+    } finally {
+      setSyncing(false);
+    }
+  };
+
+  const handleCreateMoodleCourse = async (courseData) => {
+    if (!moodleConnected) {
+      toast.error('Moodle is not connected');
+      return;
+    }
+
+    try {
+      // Create course in Moodle first
+      const moodleCourse = {
+        fullname: courseData.name,
+        shortname: courseData.short_name,
+        categoryid: 1, // Default category
+        summary: courseData.description || '',
+        visible: courseData.visibility === 'public' ? 1 : 0
+      };
+      
+      const result = await moodleService.createCourse(moodleCourse);
+      if (result.success) {
+        // Then create in local database with Moodle reference
+        const localCourseData = {
+          ...courseData,
+          lms: 'moodle',
+          external_id: result.course.id
+        };
+        
+        await ApiService.createCourse(localCourseData);
+        toast.success('Course created in Moodle and local database');
+        return true;
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      toast.error('Failed to create Moodle course');
+      throw error;
+    }
+  };
+
   // Get unique categories and LMS types for filters
   const categories = [...new Set(courses.map(course => course.category).filter(Boolean))];
   const lmsTypes = [...new Set(courses.map(course => course.lms).filter(Boolean))];
@@ -147,17 +218,37 @@ const Courses = () => {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Course Management</h1>
-            <p className="text-gray-600 mt-2">
-              Manage your LMS courses across different platforms
-            </p>
+            <div className="flex items-center space-x-4 mt-2">
+              <p className="text-gray-600">
+                Manage your LMS courses across different platforms
+              </p>
+              {moodleConnected && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mr-1.5"></div>
+                  Moodle Connected
+                </span>
+              )}
+            </div>
           </div>
-          <button
-            onClick={handleCreateCourse}
-            className="btn-primary inline-flex items-center"
-          >
-            <PlusIcon className="h-4 w-4 mr-2" />
-            Add Course
-          </button>
+          <div className="flex items-center space-x-3">
+            {moodleConnected && (
+              <button
+                onClick={handleMoodleSync}
+                disabled={syncing}
+                className="btn-secondary inline-flex items-center"
+              >
+                <ArrowPathIcon className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+                {syncing ? 'Syncing...' : 'Sync Moodle'}
+              </button>
+            )}
+            <button
+              onClick={handleCreateCourse}
+              className="btn-primary inline-flex items-center"
+            >
+              <PlusIcon className="h-4 w-4 mr-2" />
+              Add Course
+            </button>
+          </div>
         </div>
 
         {/* Search and Filters */}

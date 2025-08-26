@@ -8,6 +8,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Courses from './pages/Courses';
 import CourseContent from './pages/CourseContent';
+import MoodleIntegration from './pages/MoodleIntegration';
 import PrivateRoute from './components/PrivateRoute';
 
 function App() {
@@ -44,6 +45,7 @@ function App() {
                       <Route path="/dashboard" element={<Dashboard />} />
                       <Route path="/courses" element={<Courses />} />
                       <Route path="/courses/:courseId/content" element={<CourseContent />} />
+                      <Route path="/moodle" element={<MoodleIntegration />} />
                     </Routes>
                   </Layout>
                 </PrivateRoute>

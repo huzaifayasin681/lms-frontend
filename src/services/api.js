@@ -42,17 +42,22 @@ apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     
-    // Check if this is a protected route that requires authentication
-    const protectedRoutes = ['/courses', '/content', '/moodle', '/auth/register'];
-    const isProtectedRoute = protectedRoutes.some(route => config.url?.includes(route));
+    // Check if this is a login route (no auth needed)
     const isLoginRoute = config.url?.includes('/auth/login') || config.url?.includes('/moodle/login');
     
-    if (isProtectedRoute && !isLoginRoute && !token) {
-      return Promise.reject(new Error('Authentication required'));
-    }
-    
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (!isLoginRoute) {
+      // Check protected routes but exclude login endpoints
+      const protectedRoutes = ['/courses', '/content', '/auth/register'];
+      const isMoodleProtected = config.url?.includes('/moodle') && !config.url?.includes('/moodle/login');
+      const isProtectedRoute = protectedRoutes.some(route => config.url?.includes(route)) || isMoodleProtected;
+      
+      if (isProtectedRoute && !token) {
+        return Promise.reject(new Error('Authentication required'));
+      }
+      
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
@@ -184,8 +189,79 @@ class ApiService {
     return this._makeRequest('get', '/content/search', null, { params });
   }
 
+  // Moodle API methods
   async moodleLogin(username, password) {
+    console.log('🌐 [API] Moodle login request:', { username, hasPassword: !!password });
     return this._makeRequest('post', '/moodle/login', { username, password });
+  }
+
+  async getMoodleSiteInfo() {
+    console.log('🌐 [API] Moodle site info request');
+    return this._makeRequest('get', '/moodle/siteinfo');
+  }
+
+  async getMoodleCourses(params = {}) {
+    console.log('🌐 [API] Moodle courses request:', { params });
+    return this._makeRequest('get', '/moodle/courses', null, { params });
+  }
+
+  async createMoodleCourse(courseData) {
+    return this._makeRequest('post', '/moodle/courses', courseData);
+  }
+
+  async updateMoodleCourse(courseId, courseData) {
+    return this._makeRequest('patch', `/moodle/courses/${courseId}`, courseData);
+  }
+
+  async getMoodleUsersByField(field, values) {
+    const valuesParam = Array.isArray(values) ? values.join(',') : values;
+    return this._makeRequest('get', '/moodle/users/by-field', null, {
+      params: { field, values: valuesParam }
+    });
+  }
+
+  async enrolMoodleUsers(enrolments) {
+    return this._makeRequest('post', '/moodle/enrol', { enrolments });
+  }
+
+  async getMoodleNotifications(userid, limit = 20, offset = 0) {
+    return this._makeRequest('get', '/moodle/notifications', null, {
+      params: { userid, limit, offset }
+    });
+  }
+
+  async getMoodleUnreadCount(userid) {
+    return this._makeRequest('get', '/moodle/notifications/unread-count', null, {
+      params: { userid }
+    });
+  }
+
+  async uploadMoodleFile(fileData, options = {}) {
+    const formData = new FormData();
+    formData.append('file', fileData);
+    
+    if (options.contextid) formData.append('contextid', options.contextid);
+    if (options.component) formData.append('component', options.component);
+    if (options.filearea) formData.append('filearea', options.filearea);
+    if (options.itemid) formData.append('itemid', options.itemid);
+
+    return this._makeRequest('post', '/moodle/files/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  }
+
+  async attachMoodleFile(attachData) {
+    return this._makeRequest('post', '/moodle/files/attach', attachData);
+  }
+
+  async getMoodleCategories() {
+    console.log('🌐 [API] Moodle categories request');
+    return this._makeRequest('get', '/moodle/categories');
+  }
+
+  async createMoodleUser(userData) {
+    console.log('🌐 [API] Moodle create user request:', { username: userData.username });
+    return this._makeRequest('post', '/moodle/users', userData);
   }
 
   handleError(error) {

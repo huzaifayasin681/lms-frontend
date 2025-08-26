@@ -221,9 +221,16 @@ const CourseList = ({
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getLMSBadgeColor(course.lms)}`}>
-                      {course.lms.charAt(0).toUpperCase() + course.lms.slice(1)}
-                    </span>
+                    <div className="flex items-center space-x-2">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getLMSBadgeColor(course.lms)}`}>
+                        {course.lms === 'moodle' && '🍎'} {course.lms.charAt(0).toUpperCase() + course.lms.slice(1)}
+                      </span>
+                      {course.external_id && (
+                        <span className="text-xs text-gray-500" title={`External ID: ${course.external_id}`}>
+                          🔗
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${

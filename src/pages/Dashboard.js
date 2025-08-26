@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import ApiService from '../services/api';
+import moodleService from '../services/moodleService';
 import toast from 'react-hot-toast';
 import {
   AcademicCapIcon,
@@ -22,10 +23,24 @@ const Dashboard = () => {
   });
   const [recentCourses, setRecentCourses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [moodleStatus, setMoodleStatus] = useState({ connected: false, siteInfo: null });
 
   useEffect(() => {
     fetchDashboardData();
+    checkMoodleStatus();
   }, []);
+
+  const checkMoodleStatus = async () => {
+    try {
+      const result = await moodleService.testConnection();
+      setMoodleStatus({ 
+        connected: result.success, 
+        siteInfo: result.siteInfo 
+      });
+    } catch (error) {
+      setMoodleStatus({ connected: false, siteInfo: null });
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -107,6 +122,13 @@ const Dashboard = () => {
       icon: ServerIcon,
       color: 'text-green-600',
       bg: 'bg-green-50',
+    },
+    {
+      name: 'Moodle Status',
+      value: moodleStatus.connected ? 'Connected' : 'Disconnected',
+      icon: ServerIcon,
+      color: moodleStatus.connected ? 'text-green-600' : 'text-red-600',
+      bg: moodleStatus.connected ? 'bg-green-50' : 'bg-red-50',
     },
   ];
 

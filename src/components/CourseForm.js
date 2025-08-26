@@ -105,7 +105,7 @@ const CourseForm = ({ course, onSubmit, onClose }) => {
   };
 
   const lmsOptions = [
-    { value: 'local', label: 'Local' },
+    { value: 'local', label: 'Local Only' },
     { value: 'moodle', label: 'Moodle' },
     { value: 'canvas', label: 'Canvas' },
     { value: 'sakai', label: 'Sakai' },
@@ -282,10 +282,15 @@ const CourseForm = ({ course, onSubmit, onClose }) => {
                   >
                     {lmsOptions.map(option => (
                       <option key={option.value} value={option.value}>
-                        {option.label}
+                        {option.label} {option.value === 'moodle' ? '(Integrated)' : ''}
                       </option>
                     ))}
                   </select>
+                  {formData.lms === 'moodle' && (
+                    <p className="mt-1 text-xs text-blue-600">
+                      🔗 This course will be created in Moodle and synced locally
+                    </p>
+                  )}
                 </div>
 
                 {/* Visibility Settings */}
