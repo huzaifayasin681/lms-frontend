@@ -16,8 +16,8 @@ const getApiBaseUrl = () => {
   } else if (hostname === 'jhbnet.ddns.net') {
     return 'http://jhbnet.ddns.net:46543/api';
   } else {
-    // Default fallback
-    return 'http://localhost:6543/api';
+    // For production, use the same origin with /api
+    return `${window.location.protocol}//${window.location.host}/api`;
   }
 };
 
