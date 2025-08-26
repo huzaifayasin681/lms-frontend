@@ -13,8 +13,8 @@ const getApiBaseUrl = () => {
   
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
     return 'http://localhost:6543/api';
-  } else if (hostname === 'hbnet.ddns.net') {
-    return 'http://hbnet.ddns.net:46543/api';
+  } else if (hostname === 'jhbnet.ddns.net') {
+    return 'http://jhbnet.ddns.net:46543/api';
   } else {
     // Default fallback
     return 'http://localhost:6543/api';
