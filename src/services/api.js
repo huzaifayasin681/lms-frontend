@@ -261,7 +261,60 @@ class ApiService {
 
   async createMoodleUser(userData) {
     console.log('🌐 [API] Moodle create user request:', { username: userData.username });
-    return this._makeRequest('post', '/moodle/users', userData);
+    return this._makeRequest('post', '/moodle/users/create', userData);
+  }
+
+  async getMoodleUsers(criteria = null) {
+    console.log('🌐 [API] Moodle get users request:', { criteria });
+    const params = {};
+    if (criteria) {
+      params.criteria = JSON.stringify(criteria);
+    }
+    return this._makeRequest('get', '/moodle/users', null, { params });
+  }
+
+  async uploadMoodleFileCore(fileData, options = {}) {
+    console.log('🌐 [API] Moodle core file upload request');
+    const formData = new FormData();
+    formData.append('file', fileData);
+    
+    if (options.contextid) formData.append('contextid', options.contextid);
+    if (options.component) formData.append('component', options.component);
+    if (options.filearea) formData.append('filearea', options.filearea);
+    if (options.itemid) formData.append('itemid', options.itemid);
+    if (options.filepath) formData.append('filepath', options.filepath);
+
+    return this._makeRequest('post', '/moodle/files/upload-core', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+  }
+
+  async validateMoodleFile(fileData) {
+    return this._makeRequest('post', '/moodle/validate-file', fileData);
+  }
+
+  async searchMoodleCourses(searchTerm, page = 0, limit = 20) {
+    return this._makeRequest('get', '/moodle/courses/search', null, {
+      params: { q: searchTerm, page, limit }
+    });
+  }
+
+  async getMoodleCourseContents(courseId) {
+    return this._makeRequest('get', `/moodle/courses/${courseId}/contents`);
+  }
+
+  async deleteMoodleCourse(courseId) {
+    return this._makeRequest('delete', `/moodle/courses/${courseId}`);
+  }
+
+  async deleteMoodleContent(moduleId) {
+    return this._makeRequest('delete', `/moodle/content/${moduleId}`);
+  }
+
+  async getMoodleInstructorDashboard(userid) {
+    return this._makeRequest('get', '/moodle/instructor/dashboard', null, {
+      params: { userid }
+    });
   }
 
   handleError(error) {

@@ -86,45 +86,230 @@ class MoodleService {
       console.log('🌐 [MOODLE SERVICE] Calling apiService.getMoodleCourses()');
       const response = await apiService.getMoodleCourses(filters);
       
-      console.log('📥 [MOODLE SERVICE] Courses API response:', {
-        ok: response.ok,
-        dataCount: response.data?.length || 0,
-        isArray: Array.isArray(response.data),
-        error: response.error
+      console.log('📥 [MOODLE SERVICE] Raw API response:', response);
+      
+      // Handle direct array response or wrapped response
+      let coursesData = [];
+      if (Array.isArray(response)) {
+        coursesData = response;
+      } else if (response.ok && Array.isArray(response.data)) {
+        coursesData = response.data;
+      } else if (response.data && Array.isArray(response.data)) {
+        coursesData = response.data;
+      }
+      
+      console.log('📥 [MOODLE SERVICE] Extracted courses data:', {
+        count: coursesData.length,
+        isArray: Array.isArray(coursesData),
+        firstCourse: coursesData[0] || null
       });
       
-      if (response.ok) {
-        const mappedCourses = response.data.map(course => ({
-          id: course.id,
-          fullname: course.fullname,
-          shortname: course.shortname,
-          categoryid: course.categoryid,
-          visible: course.visible,
-          summary: course.summary || '',
-          format: course.format || 'topics',
-          startdate: course.startdate ? new Date(course.startdate * 1000) : null,
-          enddate: course.enddate ? new Date(course.enddate * 1000) : null,
-          enrolledusers: course.enrolledusercount || 0
-        }));
-        
-        console.log('✅ [MOODLE SERVICE] Courses processed:', {
-          originalCount: response.data.length,
-          mappedCount: mappedCourses.length,
-          sampleCourse: mappedCourses[0] || null
-        });
-        
-        return mappedCourses;
-      } else {
-        console.log('❌ [MOODLE SERVICE] Failed to fetch courses:', response.error);
-        throw new Error(response.error?.message || 'Failed to fetch courses');
-      }
+      const mappedCourses = coursesData.map(course => ({
+        id: course.id,
+        fullname: course.fullname,
+        shortname: course.shortname,
+        categoryid: course.categoryid,
+        visible: course.visible,
+        summary: course.summary || '',
+        format: course.format || 'topics',
+        startdate: course.startdate ? new Date(course.startdate * 1000) : null,
+        enddate: course.enddate ? new Date(course.enddate * 1000) : null,
+        enrolledusers: course.enrolledusercount || 0
+      }));
+      
+      console.log('✅ [MOODLE SERVICE] Courses processed:', {
+        originalCount: coursesData.length,
+        mappedCount: mappedCourses.length,
+        sampleCourse: mappedCourses[0] || null
+      });
+      
+      return {
+        success: true,
+        data: mappedCourses
+      };
     } catch (error) {
       console.log('💥 [MOODLE SERVICE] Get courses error:', {
         message: error.message,
         code: error.code,
         status: error.status
       });
-      throw new Error(`Failed to get courses: ${error.message}`);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Search courses
+   */
+  async searchCourses(searchTerm, page = 0, limit = 20) {
+    try {
+      const response = await apiService.searchMoodleCourses(searchTerm, page, limit);
+      if (response.ok) {
+        return {
+          success: true,
+          data: response.data
+        };
+      } else {
+        throw new Error(response.error?.message || 'Search failed');
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Delete a course
+   */
+  async deleteCourse(courseId) {
+    try {
+      const response = await apiService.deleteMoodleCourse(courseId);
+      if (response.ok) {
+        return {
+          success: true,
+          message: response.data?.message || 'Course deleted successfully'
+        };
+      } else {
+        throw new Error(response.error?.message || 'Delete failed');
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Get course contents
+   */
+  async getCourseContents(courseId) {
+    try {
+      const response = await apiService.getMoodleCourseContents(courseId);
+      if (response.ok) {
+        return {
+          success: true,
+          data: response.data || []
+        };
+      } else {
+        // Handle 403/permission errors gracefully
+        if (response.status === 403) {
+          return {
+            success: true,
+            data: [],
+            warning: 'Course contents not accessible - function may not be enabled'
+          };
+        }
+        throw new Error(response.error?.message || 'Failed to get course contents');
+      }
+    } catch (error) {
+      // Handle 403 errors gracefully
+      if (error.status === 403) {
+        return {
+          success: true,
+          data: [],
+          warning: 'Course contents not accessible - insufficient permissions'
+        };
+      }
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Delete course content/module
+   */
+  async deleteContent(moduleId) {
+    try {
+      const response = await apiService.deleteMoodleContent(moduleId);
+      if (response.ok) {
+        return {
+          success: true,
+          message: response.data?.message || 'Content deleted successfully'
+        };
+      } else {
+        throw new Error(response.error?.message || 'Delete failed');
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Validate file for upload
+   */
+  async validateFile(filename, filesize) {
+    try {
+      const response = await apiService.validateMoodleFile({ filename, filesize });
+      return {
+        success: response.ok,
+        data: response.data,
+        error: response.error?.message
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Get instructor dashboard data
+   */
+  async getInstructorDashboard(userid) {
+    try {
+      const response = await apiService.getMoodleInstructorDashboard(userid);
+      if (response.ok) {
+        return {
+          success: true,
+          data: response.data
+        };
+      } else {
+        throw new Error(response.error?.message || 'Failed to get dashboard data');
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Upload file to Moodle
+   */
+  async uploadFile(formData, onProgress) {
+    try {
+      const response = await apiService.uploadMoodleFile(formData.get('file'), {
+        contextid: formData.get('contextid'),
+        component: formData.get('component'),
+        filearea: formData.get('filearea'),
+        itemid: formData.get('itemid')
+      });
+      
+      if (response.ok) {
+        return {
+          success: true,
+          data: response.data
+        };
+      } else {
+        throw new Error(response.error?.message || 'Upload failed');
+      }
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
     }
   }
 
@@ -277,29 +462,6 @@ class MoodleService {
   }
 
   /**
-   * Upload a file to Moodle
-   */
-  async uploadFile(file, options = {}) {
-    try {
-      const response = await apiService.uploadMoodleFile(file, options);
-      if (response.ok) {
-        return {
-          success: true,
-          draftitemid: response.data.draftitemid,
-          filename: response.data.filename
-        };
-      } else {
-        throw new Error(response.error?.message || 'Failed to upload file');
-      }
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message
-      };
-    }
-  }
-
-  /**
    * Attach uploaded file to course
    */
   async attachFileToCourse(courseid, draftitemid, name, intro = '') {
@@ -366,6 +528,66 @@ class MoodleService {
   }
 
   /**
+   * Get users using core_user_get_users function
+   */
+  async getUsers(criteria = null) {
+    console.log('👥 [MOODLE SERVICE] Getting users with criteria:', criteria);
+    try {
+      const response = await apiService.getMoodleUsers(criteria);
+      if (response.ok) {
+        const users = response.data.map(user => ({
+          id: user.id,
+          username: user.username,
+          firstname: user.firstname,
+          lastname: user.lastname,
+          fullname: `${user.firstname} ${user.lastname}`.trim(),
+          email: user.email,
+          profileimage: user.profileimageurl
+        }));
+        console.log('✅ [MOODLE SERVICE] Users loaded:', users.length);
+        return { success: true, users };
+      } else {
+        throw new Error(response.error?.message || 'Failed to get users');
+      }
+    } catch (error) {
+      console.log('💥 [MOODLE SERVICE] Get users error:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Upload file using core_files_upload web service
+   */
+  async uploadFileCore(formData, onProgress) {
+    console.log('📁 [MOODLE SERVICE] Uploading file via core_files_upload...');
+    try {
+      const response = await apiService.uploadMoodleFileCore(formData.get('file'), {
+        contextid: formData.get('contextid'),
+        component: formData.get('component'),
+        filearea: formData.get('filearea'),
+        itemid: formData.get('itemid'),
+        filepath: formData.get('filepath')
+      });
+      
+      if (response.ok) {
+        console.log('✅ [MOODLE SERVICE] File uploaded successfully via core service');
+        return {
+          success: true,
+          data: response.data
+        };
+      } else {
+        throw new Error(response.error?.message || 'Upload failed');
+      }
+    } catch (error) {
+      console.log('💥 [MOODLE SERVICE] Upload error:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
    * Get available role IDs with descriptions
    */
   getRoles() {
@@ -419,6 +641,28 @@ class MoodleService {
     }
     
     return 'An unexpected error occurred';
+  }
+
+  /**
+   * Get available upload methods
+   */
+  getUploadMethods() {
+    return {
+      standard: 'Standard Upload (upload.php)',
+      core: 'Core Web Service (core_files_upload)'
+    };
+  }
+
+  /**
+   * Build user search criteria for core_user_get_users
+   */
+  buildUserCriteria(searchType, searchValue) {
+    const validTypes = ['email', 'username', 'firstname', 'lastname', 'id'];
+    if (!validTypes.includes(searchType)) {
+      throw new Error(`Invalid search type. Must be one of: ${validTypes.join(', ')}`);
+    }
+    
+    return [{ key: searchType, value: searchValue }];
   }
 }
 

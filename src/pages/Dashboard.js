@@ -144,7 +144,7 @@ const Dashboard = () => {
     <div className="px-4 py-6 sm:px-0">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">
-          Welcome back, {user?.username}!
+          Welcome to LMS Dashboard!
         </h1>
         <p className="text-gray-600 mt-2">
           Here's an overview of your LMS course management system.
@@ -226,59 +226,57 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Admin Actions */}
-        {user?.is_admin && (
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h2 className="text-lg font-medium text-gray-900">Admin Actions</h2>
-            </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <h3 className="text-sm font-medium text-gray-900 mb-2">
-                  Sync Courses from External LMS
-                </h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => handleSync('moodle')}
-                    className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                  >
-                    Sync Moodle
-                  </button>
-                  <button
-                    onClick={() => handleSync('canvas')}
-                    className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                  >
-                    Sync Canvas
-                  </button>
-                  <button
-                    onClick={() => handleSync('sakai')}
-                    className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                  >
-                    Sync Sakai
-                  </button>
-                  <button
-                    onClick={() => handleSync('chamilo')}
-                    className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-                  >
-                    Sync Chamilo
-                  </button>
-                </div>
-                <p className="text-xs text-gray-500 mt-2">
-                  Sync courses from your configured LMS instances
-                </p>
-              </div>
-
-              <div className="pt-4 border-t border-gray-200">
-                <Link
-                  to="/courses"
-                  className="btn-primary w-full justify-center inline-flex items-center"
+        {/* LMS Actions */}
+        <div className="bg-white shadow rounded-lg">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <h2 className="text-lg font-medium text-gray-900">LMS Actions</h2>
+          </div>
+          <div className="p-6 space-y-4">
+            <div>
+              <h3 className="text-sm font-medium text-gray-900 mb-2">
+                Sync Courses from External LMS
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => handleSync('moodle')}
+                  className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
                 >
-                  Manage All Courses
-                </Link>
+                  Sync Moodle
+                </button>
+                <button
+                  onClick={() => handleSync('canvas')}
+                  className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                >
+                  Sync Canvas
+                </button>
+                <button
+                  onClick={() => handleSync('sakai')}
+                  className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                >
+                  Sync Sakai
+                </button>
+                <button
+                  onClick={() => handleSync('chamilo')}
+                  className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                >
+                  Sync Chamilo
+                </button>
               </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Sync courses from your configured LMS instances
+              </p>
+            </div>
+
+            <div className="pt-4 border-t border-gray-200">
+              <Link
+                to="/courses"
+                className="btn-primary w-full justify-center inline-flex items-center"
+              >
+                Manage All Courses
+              </Link>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

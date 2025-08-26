@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import moodleService from '../services/moodleService';
 import MoodleLogin from '../components/MoodleLogin';
-import MoodleManager from '../components/MoodleManager';
+import MoodleManagerEnhanced from '../components/MoodleManagerEnhanced';
 import MoodleNotifications from '../components/MoodleNotifications';
 
 const MoodleIntegration = () => {
@@ -73,27 +73,45 @@ const MoodleIntegration = () => {
     console.log('📚 [MOODLE] Starting to load courses...');
     try {
       console.log('🌐 [MOODLE] Calling moodleService.getCourses()');
-      const coursesData = await moodleService.getCourses();
+      const result = await moodleService.getCourses();
       
-      console.log('📥 [MOODLE] Courses data received:', {
-        count: coursesData?.length || 0,
-        isArray: Array.isArray(coursesData),
-        firstCourse: coursesData?.[0] ? {
-          id: coursesData[0].id,
-          fullname: coursesData[0].fullname,
-          shortname: coursesData[0].shortname,
-          visible: coursesData[0].visible
-        } : null
+      console.log('📥 [MOODLE] Raw service result:', {
+        success: result?.success,
+        hasData: !!result?.data,
+        dataLength: result?.data?.length || 0,
+        isArray: Array.isArray(result?.data)
       });
       
-      setCourses(coursesData);
-      console.log('✅ [MOODLE] Courses loaded successfully:', coursesData?.length || 0, 'courses');
+      if (result?.success && result?.data) {
+        const coursesData = result.data;
+        
+        console.log('📥 [MOODLE] Courses data extracted:', {
+          count: coursesData?.length || 0,
+          isArray: Array.isArray(coursesData),
+          firstCourse: coursesData?.[0] ? {
+            id: coursesData[0].id,
+            fullname: coursesData[0].fullname,
+            shortname: coursesData[0].shortname,
+            visible: coursesData[0].visible
+          } : null
+        });
+        
+        setCourses(coursesData);
+        console.log('✅ [MOODLE] Courses loaded successfully:', coursesData?.length || 0, 'courses');
+      } else {
+        console.log('❌ [MOODLE] Service returned unsuccessful result:', result);
+        setCourses([]);
+        if (result?.error) {
+          toast.error(`Failed to load courses: ${result.error}`);
+        }
+      }
     } catch (error) {
       console.log('💥 [MOODLE] Failed to load courses:', {
         message: error.message,
         code: error.code,
         status: error.status
       });
+      setCourses([]);
       toast.error(`Failed to load courses: ${error.message}`);
     }
   };
@@ -285,47 +303,7 @@ const MoodleIntegration = () => {
           </div>
         )}
 
-        {/* User Authentication Section */}
-        {moodleUser ? (
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-r from-green-400 to-blue-500 rounded-full flex items-center justify-center">
-                    <span className="text-white font-medium text-sm">{moodleUser.firstname?.[0]}{moodleUser.lastname?.[0]}</span>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-medium text-gray-900">{moodleUser.fullname}</h3>
-                    <p className="text-sm text-gray-500">@{moodleUser.username} • Authenticated</p>
-                  </div>
-                </div>
-                <button
-                  onClick={handleMoodleLogout}
-                  className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                >
-                  🚪 Logout
-                </button>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span className="text-blue-600 text-lg">🔑</span>
-                </div>
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900">User Authentication</h3>
-                  <p className="text-sm text-gray-500">Login with your Moodle credentials to access user-specific features</p>
-                </div>
-              </div>
-            </div>
-            <div className="px-6 py-4">
-              <MoodleLogin onLoginSuccess={handleMoodleLogin} />
-            </div>
-          </div>
-        )}
+
 
         {/* Courses Section */}
         <div className="bg-white shadow rounded-lg">
@@ -337,7 +315,7 @@ const MoodleIntegration = () => {
                 </div>
                 <div>
                   <h2 className="text-lg font-medium text-gray-900">Courses</h2>
-                  <p className="text-sm text-gray-500">{courses.length} courses available</p>
+                  <p className="text-sm text-gray-500">{courses?.length || 0} courses available</p>
                 </div>
               </div>
               <button
@@ -361,7 +339,7 @@ const MoodleIntegration = () => {
           </div>
           
           <div className="p-6">
-            {courses.length > 0 ? (
+            {courses && courses.length > 0 ? (
               <div className="grid gap-4">
                 {courses.map((course) => (
                   <div key={course.id} className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-sm transition-all duration-200">
@@ -413,9 +391,9 @@ const MoodleIntegration = () => {
           </div>
         </div>
 
-        {/* Management Tools */}
+        {/* Enhanced Management Tools */}
         {connected && (
-          <MoodleManager />
+          <MoodleManagerEnhanced />
         )}
         </div>
       </div>

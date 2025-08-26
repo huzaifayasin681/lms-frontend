@@ -14,7 +14,6 @@ import {
 } from '@heroicons/react/24/outline';
 
 const Courses = () => {
-  const { user } = useAuth();
   const [courses, setCourses] = useState([]);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -241,6 +240,13 @@ const Courses = () => {
                 {syncing ? 'Syncing...' : 'Sync Moodle'}
               </button>
             )}
+            <button
+              onClick={() => ApiService.syncCourses('canvas').then(() => { toast.success('Canvas sync completed'); fetchCourses(); }).catch(() => toast.error('Canvas sync failed'))}
+              className="btn-secondary inline-flex items-center"
+            >
+              <ArrowPathIcon className="h-4 w-4 mr-2" />
+              Sync Canvas
+            </button>
             <button
               onClick={handleCreateCourse}
               className="btn-primary inline-flex items-center"

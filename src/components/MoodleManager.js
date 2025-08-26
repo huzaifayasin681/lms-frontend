@@ -254,72 +254,106 @@ const MoodleManager = () => {
           </div>
         )}
 
+
+
         {activeTab === 'users' && (
-          <div>
-            <h3 className="text-lg font-medium mb-4">Create User</h3>
-            <form onSubmit={handleCreateUser} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Username</label>
-                  <input
-                    type="text"
-                    value={userForm.username}
-                    onChange={(e) => setUserForm({...userForm, username: e.target.value})}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Password</label>
-                  <input
-                    type="password"
-                    value={userForm.password}
-                    onChange={(e) => setUserForm({...userForm, password: e.target.value})}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                    required
-                  />
+          <div className="max-w-2xl">
+            <div className="mb-6">
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">User Management</h3>
+              <p className="text-gray-600">Create users and search existing ones</p>
+            </div>
+            
+            <div className="space-y-8">
+              {/* Create User Form */}
+              <div className="bg-gray-50 p-6 rounded-lg">
+                <h4 className="text-lg font-medium mb-4">Create New User</h4>
+                <form onSubmit={handleCreateUser} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Username *</label>
+                      <input
+                        type="text"
+                        value={userForm.username}
+                        onChange={(e) => setUserForm({...userForm, username: e.target.value})}
+                        className="block w-full border-gray-300 rounded-md px-3 py-2"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Password *</label>
+                      <input
+                        type="password"
+                        value={userForm.password}
+                        onChange={(e) => setUserForm({...userForm, password: e.target.value})}
+                        className="block w-full border-gray-300 rounded-md px-3 py-2"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                      <input
+                        type="text"
+                        value={userForm.firstname}
+                        onChange={(e) => setUserForm({...userForm, firstname: e.target.value})}
+                        className="block w-full border-gray-300 rounded-md px-3 py-2"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+                      <input
+                        type="text"
+                        value={userForm.lastname}
+                        onChange={(e) => setUserForm({...userForm, lastname: e.target.value})}
+                        className="block w-full border-gray-300 rounded-md px-3 py-2"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email *</label>
+                    <input
+                      type="email"
+                      value={userForm.email}
+                      onChange={(e) => setUserForm({...userForm, email: e.target.value})}
+                      className="block w-full border-gray-300 rounded-md px-3 py-2"
+                      required
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
+                  >
+                    {loading ? 'Creating...' : '👤 Create User'}
+                  </button>
+                </form>
+              </div>
+              
+              {/* Search Users */}
+              <div className="bg-blue-50 p-6 rounded-lg">
+                <h4 className="text-lg font-medium mb-4">Search Users</h4>
+                <div className="space-y-4">
+                  <div className="flex space-x-4">
+                    <select className="border-gray-300 rounded-md px-3 py-2">
+                      <option value="email">Email</option>
+                      <option value="username">Username</option>
+                      <option value="firstname">First Name</option>
+                      <option value="lastname">Last Name</option>
+                    </select>
+                    <input
+                      type="text"
+                      placeholder="Search value..."
+                      className="flex-1 border-gray-300 rounded-md px-3 py-2"
+                    />
+                    <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                      🔍 Search
+                    </button>
+                  </div>
+                  <p className="text-sm text-gray-600">Uses core_user_get_users function</p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">First Name</label>
-                  <input
-                    type="text"
-                    value={userForm.firstname}
-                    onChange={(e) => setUserForm({...userForm, firstname: e.target.value})}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Last Name</label>
-                  <input
-                    type="text"
-                    value={userForm.lastname}
-                    onChange={(e) => setUserForm({...userForm, lastname: e.target.value})}
-                    className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                    required
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <input
-                  type="email"
-                  value={userForm.email}
-                  onChange={(e) => setUserForm({...userForm, email: e.target.value})}
-                  className="mt-1 block w-full border border-gray-300 rounded-md px-3 py-2"
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50"
-              >
-                {loading ? 'Creating...' : 'Create User'}
-              </button>
-            </form>
+            </div>
           </div>
         )}
 
@@ -374,11 +408,58 @@ const MoodleManager = () => {
         )}
 
         {activeTab === 'files' && (
-          <div>
-            <h3 className="text-lg font-medium mb-4">File Management</h3>
-            <div className="text-center py-8 text-gray-500">
-              <p>📁 File upload and management</p>
-              <p className="text-sm">Feature coming soon...</p>
+          <div className="max-w-2xl">
+            <div className="mb-6">
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">File Upload</h3>
+              <p className="text-gray-600">Upload files using different Moodle methods</p>
+            </div>
+            
+            <div className="space-y-6">
+              {/* Standard Upload */}
+              <div className="bg-gray-50 p-6 rounded-lg">
+                <h4 className="text-lg font-medium mb-4">📤 Standard Upload (upload.php)</h4>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <input type="file" className="hidden" id="standard-upload" />
+                  <label htmlFor="standard-upload" className="cursor-pointer">
+                    <div className="text-gray-500">
+                      <p className="text-lg mb-2">📁 Drop files here or click to browse</p>
+                      <p className="text-sm">Uses existing upload.php endpoint</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+              
+              {/* Core Upload */}
+              <div className="bg-blue-50 p-6 rounded-lg">
+                <h4 className="text-lg font-medium mb-4">🔧 Core Web Service Upload</h4>
+                <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 text-center">
+                  <input type="file" className="hidden" id="core-upload" />
+                  <label htmlFor="core-upload" className="cursor-pointer">
+                    <div className="text-blue-600">
+                      <p className="text-lg mb-2">📁 Drop files here or click to browse</p>
+                      <p className="text-sm">Uses core_files_upload web service</p>
+                    </div>
+                  </label>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <label className="block text-gray-700 mb-1">Context ID</label>
+                    <input type="number" defaultValue="1" className="w-full border-gray-300 rounded px-2 py-1" />
+                  </div>
+                  <div>
+                    <label className="block text-gray-700 mb-1">Component</label>
+                    <input type="text" defaultValue="user" className="w-full border-gray-300 rounded px-2 py-1" />
+                  </div>
+                  <div>
+                    <label className="block text-gray-700 mb-1">File Area</label>
+                    <input type="text" defaultValue="draft" className="w-full border-gray-300 rounded px-2 py-1" />
+                  </div>
+                  <div>
+                    <label className="block text-gray-700 mb-1">Item ID</label>
+                    <input type="number" defaultValue="0" className="w-full border-gray-300 rounded px-2 py-1" />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}
