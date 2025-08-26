@@ -1,23 +1,65 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:1234/api';
+// Auto-detect environment and set appropriate API URL
+const getApiBaseUrl = () => {
+  // If explicitly set in env, use that
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+  
+  // Auto-detect based on current location
+  const hostname = window.location.hostname;
+  const port = window.location.port;
+  
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'http://localhost:6543/api';
+  } else if (hostname === 'hbnet.ddns.net') {
+    return 'http://hbnet.ddns.net:46543/api';
+  } else {
+    // Default fallback
+    return 'http://localhost:6543/api';
+  }
+};
+
+const API_BASE_URL = getApiBaseUrl();
+
+// Debug logging for API configuration (only in development)
+if (process.env.NODE_ENV === 'development') {
+  console.log('=== API Configuration Debug ===');
+  console.log('REACT_APP_API_URL from env:', process.env.REACT_APP_API_URL);
+  console.log('Final API_BASE_URL:', API_BASE_URL);
+  console.log('Current window location:', window.location.origin);
+  console.log('================================');
+}
 
 // Create axios instance with authentication
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
 });
 
-// Add request interceptor to include auth token
+// Add request interceptor to include auth token and validate authorization
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
+    
+    // Check if this is a protected route that requires authentication
+    const protectedRoutes = ['/courses', '/content', '/moodle', '/auth/register'];
+    const isProtectedRoute = protectedRoutes.some(route => config.url?.includes(route));
+    const isLoginRoute = config.url?.includes('/auth/login') || config.url?.includes('/moodle/login');
+    
+    if (isProtectedRoute && !isLoginRoute && !token) {
+      return Promise.reject(new Error('Authentication required'));
+    }
+    
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
   (error) => {
-    console.error('Request interceptor error:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Request interceptor error:', error);
+    }
     return Promise.reject(error);
   }
 );
@@ -37,7 +79,9 @@ apiClient.interceptors.response.use(
       window.dispatchEvent(new CustomEvent('auth-error', { detail: error }));
     } else if (error.response?.status >= 500) {
       // Server error
-      console.error('Server error:', error.response?.data);
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Server error:', error.response?.data);
+      }
       window.dispatchEvent(new CustomEvent('server-error', { detail: error }));
     }
     
@@ -46,80 +90,50 @@ apiClient.interceptors.response.use(
 );
 
 class ApiService {
-  // Course API methods
-  async getCourses(params = {}) {
+  // Helper method to reduce code duplication
+  async _makeRequest(method, url, data = null, config = {}) {
     try {
-      const response = await apiClient.get('/courses', { params });
+      const response = method === 'get' 
+        ? await apiClient.get(url, config)
+        : await apiClient[method](url, data, config);
       return response.data;
     } catch (error) {
       throw this.handleError(error);
     }
+  }
+
+  // Course API methods
+  async getCourses(params = {}) {
+    return this._makeRequest('get', '/courses', null, { params });
   }
 
   async getCourse(courseId) {
-    try {
-      const response = await apiClient.get(`/courses/${courseId}`);
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+    return this._makeRequest('get', `/courses/${courseId}`);
   }
 
   async createCourse(courseData) {
-    try {
-      const response = await apiClient.post('/courses', courseData);
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+    return this._makeRequest('post', '/courses', courseData);
   }
 
   async updateCourse(courseId, courseData) {
-    try {
-      const response = await apiClient.put(`/courses/${courseId}`, courseData);
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+    return this._makeRequest('put', `/courses/${courseId}`, courseData);
   }
 
   async deleteCourse(courseId) {
-    try {
-      const response = await apiClient.delete(`/courses/${courseId}`);
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+    return this._makeRequest('delete', `/courses/${courseId}`);
   }
 
   async syncCourses(lmsType) {
-    try {
-      const response = await apiClient.post('/courses/sync', {
-        lms_type: lmsType
-      });
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+    return this._makeRequest('post', '/courses/sync', { lms_type: lmsType });
   }
 
   async healthCheck() {
-    try {
-      const response = await apiClient.get('/health');
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+    return this._makeRequest('get', '/health');
   }
 
   // Content API methods
   async getCourseContent(courseId, params = {}) {
-    try {
-      const response = await apiClient.get(`/courses/${courseId}/content`, { params });
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+    return this._makeRequest('get', `/courses/${courseId}/content`, null, { params });
   }
 
   async uploadContent(courseId, contentData, onUploadProgress = null) {
@@ -132,8 +146,10 @@ class ApiService {
 
       if (onUploadProgress) {
         config.onUploadProgress = (progressEvent) => {
-          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          onUploadProgress(progress);
+          if (progressEvent.total > 0) {
+            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            onUploadProgress(progress);
+          }
         };
       }
 
@@ -149,59 +165,33 @@ class ApiService {
   }
 
   async getContentItem(contentId) {
-    try {
-      const response = await apiClient.get(`/content/${contentId}`);
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+    return this._makeRequest('get', `/content/${contentId}`);
   }
 
   async updateContentItem(contentId, contentData) {
-    try {
-      const response = await apiClient.put(`/content/${contentId}`, contentData);
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+    return this._makeRequest('put', `/content/${contentId}`, contentData);
   }
 
   async deleteContentItem(contentId) {
-    try {
-      const response = await apiClient.delete(`/content/${contentId}`);
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+    return this._makeRequest('delete', `/content/${contentId}`);
   }
 
-  async getContentFileUrl(contentId) {
+  getContentFileUrl(contentId) {
     return `${API_BASE_URL}/content/${contentId}/file`;
   }
 
   async searchContent(params = {}) {
-    try {
-      const response = await apiClient.get('/content/search', { params });
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+    return this._makeRequest('get', '/content/search', null, { params });
   }
 
   async moodleLogin(username, password) {
-    try {
-      const response = await apiClient.post('/moodle/login', {
-        username,
-        password
-      });
-      return response.data;
-    } catch (error) {
-      throw this.handleError(error);
-    }
+    return this._makeRequest('post', '/moodle/login', { username, password });
   }
 
   handleError(error) {
-    console.error('API Error:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('API Error:', error);
+    }
     
     if (error.response) {
       // Server responded with error status

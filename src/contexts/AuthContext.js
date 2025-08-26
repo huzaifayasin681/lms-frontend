@@ -104,6 +104,14 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithToken = (token, user) => {
+    AuthService.setToken(token);
+    dispatch({
+      type: 'LOGIN_SUCCESS',
+      payload: { user },
+    });
+  };
+
   const logout = () => {
     AuthService.logout();
     dispatch({ type: 'LOGOUT' });
@@ -117,6 +125,7 @@ export const AuthProvider = ({ children }) => {
     ...state,
     login,
     register,
+    loginWithToken,
     logout,
     clearError,
     isAdmin: () => AuthService.isAdmin(),

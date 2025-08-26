@@ -142,6 +142,11 @@ class AuthService {
     }
   }
 
+  setToken(token) {
+    localStorage.setItem('token', token);
+    this.token = token;
+  }
+
   logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');

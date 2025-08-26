@@ -14,7 +14,7 @@ const Login = () => {
     moodlePassword: '',
   });
   const [showMoodleLogin, setShowMoodleLogin] = useState(false);
-  const { login, isAuthenticated, loading, error, clearError } = useAuth();
+  const { login, loginWithToken, isAuthenticated, loading, error, clearError } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -64,17 +64,19 @@ const Login = () => {
         moodleFormData.moodlePassword
       );
 
-      if (response.ok) {
+      if (response.ok && response.data && response.data.token) {
         toast.success('Moodle login successful!');
-        // You can store the Moodle token or user info as needed
-        console.log('Moodle user info:', response.data);
-        // For now, we'll just show a success message
+        // Store the Moodle token
+        localStorage.setItem('token', response.data.token);
+        // Update the auth context
+        loginWithToken(response.data.token, response.data.user);
+        navigate('/dashboard');
       } else {
-        toast.error(response.error.message || 'Moodle login failed');
+        toast.error(response.error?.message || 'Moodle login failed');
       }
     } catch (error) {
       console.error('Moodle login error:', error);
-      toast.error('Moodle login failed: ' + error.message);
+      toast.error('Moodle login failed: ' + (error.message || 'Please try again.'));
     }
   };
 
